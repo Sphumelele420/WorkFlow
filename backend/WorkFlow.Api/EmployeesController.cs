@@ -66,7 +66,21 @@ public class EmployeesController : ControllerBase
         };
 
         _context.Employees.Add(employee);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (
+            ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlException
+            && (sqlException.Number == 2601
+                || sqlException.Number == 2627))
+        {
+            return Conflict(new
+            {
+                message = "An employee with this email address already exists."
+            });
+        }
 
         return CreatedAtAction(
             nameof(GetEmployee),
@@ -104,7 +118,20 @@ public class EmployeesController : ControllerBase
             existingEmployee.DateHired = request.DateHired.Value;
         }
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (
+            ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlException
+            && (sqlException.Number == 2601
+                || sqlException.Number == 2627))
+        {
+            return Conflict(new
+            {
+                message = "An employee with this email address already exists."
+            });
+        }
 
         return NoContent();
     }

@@ -62,6 +62,9 @@ namespace WorkFlow.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Email")
+                        .IsUnique();
+
                     b.ToTable("Employees");
                 });
 #pragma warning restore 612, 618
