@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using WorkFlow.Api.Models;
 
 namespace WorkFlow.Api.Data;
 
@@ -10,4 +11,6 @@ public class ApplicationDbContext : DbContext
         : base(options)
     {
     }
+
+    public DbSet<Employee> Employees => Set<Employee>();
 }
