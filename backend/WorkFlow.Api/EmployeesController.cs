@@ -12,10 +12,14 @@ namespace WorkFlow.Api.Controllers;
 public class EmployeesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<EmployeesController> _logger;
 
-    public EmployeesController(ApplicationDbContext context)
+    public EmployeesController(
+        ApplicationDbContext context,
+        ILogger<EmployeesController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // GET: api/employees
@@ -76,11 +80,18 @@ public class EmployeesController : ControllerBase
             && (sqlException.Number == 2601
                 || sqlException.Number == 2627))
         {
+            _logger.LogWarning(
+                "Employee creation failed because the email address already exists.");
+
             return Conflict(new
             {
                 message = "An employee with this email address already exists."
             });
         }
+
+        _logger.LogInformation(
+            "Employee {EmployeeId} was created successfully.",
+            employee.Id);
 
         return CreatedAtAction(
             nameof(GetEmployee),
@@ -103,8 +114,14 @@ public class EmployeesController : ControllerBase
 
         if (!existingEmployee.IsActive)
         {
-            return Conflict(
-                "Inactive employees cannot be updated.");
+            _logger.LogWarning(
+                "Update rejected because employee {EmployeeId} is inactive.",
+                id);
+
+          return Problem(
+    statusCode: StatusCodes.Status409Conflict,
+    title: "Employee is inactive",
+    detail: "Inactive employees cannot be updated.");
         }
 
         existingEmployee.FirstName = request.FirstName;
@@ -127,11 +144,19 @@ public class EmployeesController : ControllerBase
             && (sqlException.Number == 2601
                 || sqlException.Number == 2627))
         {
-            return Conflict(new
-            {
-                message = "An employee with this email address already exists."
-            });
+            _logger.LogWarning(
+                "Employee update rejected because the email address already exists for employee {EmployeeId}.",
+                id);
+
+            return Problem(
+    statusCode: StatusCodes.Status409Conflict,
+    title: "Duplicate employee email",
+    detail: "An employee with this email address already exists.");
         }
+
+        _logger.LogInformation(
+            "Employee {EmployeeId} was updated successfully.",
+            id);
 
         return NoContent();
     }
@@ -156,6 +181,10 @@ public class EmployeesController : ControllerBase
         employee.IsActive = false;
 
         await _context.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Employee {EmployeeId} was deactivated successfully.",
+            id);
 
         return NoContent();
     }

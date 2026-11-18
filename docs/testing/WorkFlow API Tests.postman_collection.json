@@ -1,0 +1,414 @@
+{
+  "info": {
+    "_postman_id": "0d96b938-25ed-4354-972c-fc326463920f",
+    "name": "WorkFlow API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58302902",
+    "_collection_link": "https://go.postman.co/collection/58302902-0d96b938-25ed-4354-972c-fc326463920f?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Create Employee",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\n\r\npm.test(\"Response contains employee details\", function () {\r\n    const response = pm.response.json();\r\n\r\n    pm.expect(response).to.have.property(\"id\");\r\npm.expect(response.firstName).to.eql(\"Test\");\r\npm.expect(response.lastName).to.eql(\"Employee\");\r\n    pm.expect(response.email).to.eql(\r\n        pm.collectionVariables.get(\"testEmployeeEmail\")\r\n    );\r\n});\r\n\r\n\r\npm.test(\"Employee is active by default\", function () {\r\n    const response = pm.response.json();\r\n\r\n    pm.expect(response.isActive).to.eql(true);\r\n});\r\n\r\n\r\nconst response = pm.response.json();\r\n\r\nif (pm.response.code === 201 && response.id !== undefined) {\r\n    pm.collectionVariables.set(\"testEmployeeId\", response.id);\r\n}\r\n"
+            ]
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\nconst uniqueEmail = `workflow.test.${Date.now()}@example.com`;\r\n\r\npm.collectionVariables.set(\"testEmployeeEmail\", uniqueEmail);\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"firstName\": \"Test\",\r\n    \"lastName\": \"Employee\",\r\n    \"email\": \"{{testEmployeeEmail}}\",\r\n    \"jobTitle\": \"QA Tester\",\r\n    \"department\": \"Quality Assurance\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5266/api/employees",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Employees",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Response is an array\", function () {\r\n    const response = pm.response.json();\r\n\r\n    pm.expect(response).to.be.an(\"array\");\r\n});\r\n\r\npm.test(\"All returned employees are active\", function () {\r\n    const employees = pm.response.json();\r\n\r\n    employees.forEach(function (employee) {\r\n        pm.expect(employee.isActive).to.eql(true);\r\n    });\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5266/api/employees",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Employee By ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\npm.test(\"Status code is 200 OK\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Correct employee is returned\", function () {\r\n    const response = pm.response.json();\r\n\r\n    pm.expect(response.id).to.eql(\r\n        Number(pm.collectionVariables.get(\"testEmployeeId\"))\r\n    );\r\n});\r\n\r\npm.test(\"Employee details are valid\", function () {\r\n    const response = pm.response.json();\r\n\r\npm.expect(response.firstName).to.eql(\"Test\");\r\npm.expect(response.lastName).to.eql(\"Employee\");\r\n    pm.expect(response.email).to.eql(\r\n        pm.collectionVariables.get(\"testEmployeeEmail\")\r\n    );\r\n    pm.expect(response.isActive).to.eql(true);\r\n});\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5266/api/employees/{{testEmployeeId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees",
+            "{{testEmployeeId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Employee",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 204 No Content\", function () {\r\n    pm.response.to.have.status(204);\r\n});\r\n\r\npm.test(\"Response body is empty\", function () {\r\n    pm.expect(pm.response.text()).to.eql(\"\");\r\n});\r\n\r\npm.test(\"Update request completed successfully\", function () {\r\n    pm.expect(pm.response.code).to.eql(204);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"firstName\": \"Test\",\r\n    \"lastName\": \"Employee\",\r\n    \"email\": \"{{testEmployeeEmail}}\",\r\n    \"jobTitle\": \"Junior Software Developer\",\r\n    \"department\": \"Software Engineering\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5266/api/employees/{{testEmployeeId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees",
+            "{{testEmployeeId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Employee",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 204 No Content\", function () {\r\n    pm.response.to.have.status(204);\r\n});\r\n\r\npm.test(\"Response body is empty\", function () {\r\n    pm.expect(pm.response.text()).to.eql(\"\");\r\n});\r\n\r\npm.test(\"Delete request completed successfully\", function () {\r\n    pm.expect(pm.response.code).to.eql(204);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5266/api/employees/{{testEmployeeId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees",
+            "{{testEmployeeId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Soft Delete",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\npm.test(\"Status code is 200 OK\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Employee still exists\", function () {\r\n    const response = pm.response.json();\r\n\r\n    pm.expect(response.id).to.eql(\r\n        Number(pm.collectionVariables.get(\"testEmployeeId\"))\r\n    );\r\n});\r\n\r\npm.test(\"Employee is marked inactive\", function () {\r\n    const response = pm.response.json();\r\n\r\n    pm.expect(response.isActive).to.eql(false);\r\n});\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5266/api/employees/{{testEmployeeId}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees",
+            "{{testEmployeeId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Inactive Employee Excluded",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\npm.test(\"Newly deleted employee is excluded\", function () {\r\n    const response = pm.response.json();\r\n\r\n    const deletedEmployeeId = Number(\r\n        pm.collectionVariables.get(\"testEmployeeId\")\r\n    );\r\n\r\n    const inactiveEmployee = response.find(\r\n        employee => employee.id === deletedEmployeeId\r\n    );\r\n\r\n    pm.expect(inactiveEmployee).to.be.undefined;\r\n});\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5266/api/employees",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Employee Not Found",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\npm.test(\"Status code is 404 Not Found\", function () {\r\n    pm.response.to.have.status(404);\r\n});\r\n\r\npm.test(\"API returns an error response\", function () {\r\n    pm.expect(pm.response.code).to.eql(404);\r\n});\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5266/api/employees/999999",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees",
+            "999999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Invalid Employee Data",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\npm.test(\"Invalid employee is rejected\", function () {\r\n    pm.expect(pm.response.code).to.be.oneOf([400, 422]);\r\n});\r\n\r\npm.test(\"Employee was not created\", function () {\r\n    pm.expect(pm.response.code).to.not.eql(201);\r\n});\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"firstName\": \"\",\r\n    \"lastName\": \"\",\r\n    \"email\": \"not-an-email\",\r\n    \"jobTitle\": \"\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5266/api/employees",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Update Employee Not Found",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\npm.test(\"Non-existent employee returns 404\", function () {\r\n    pm.response.to.have.status(404);\r\n});\r\n\r\npm.test(\"Employee was not updated\", function () {\r\n    pm.expect(pm.response.code).to.not.eql(204);\r\n});\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"firstName\": \"John\",\r\n    \"lastName\": \"Doe\",\r\n    \"email\": \"john.doe.test@example.com\",\r\n    \"jobTitle\": \"Software Developer\",\r\n    \"department\": \"IT\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5266/api/employees/999999",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees",
+            "999999"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Verify Delete Employee Not Found",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "\r\npm.test(\"Status code is 404 Not Found\", function () {\r\n    pm.response.to.have.status(404);\r\n});\r\n\r\npm.test(\"Non-existent employee was not deleted\", function () {\r\n    pm.expect(pm.response.code).to.not.eql(204);\r\n});\r\n"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5266/api/employees/999999",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5266",
+          "path": [
+            "api",
+            "employees",
+            "999999"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "testEmployeeEmail",
+      "value": ""
+    },
+    {
+      "key": "testEmployeeId",
+      "value": ""
+    }
+  ]
+}
